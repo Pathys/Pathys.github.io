@@ -1,1 +1,280 @@
-Hello World
+<!DOCTYPE html>
+<html>
+ 
+<head>
+	<meta charset="UTF-8" />
+	<title>map-view</title>
+	<meta name="description" content="Kurzbeschreibung" />
+
+<link rel="stylesheet" href="plastic_buttons.css">
+
+<style>
+    .master_container {
+        width: 772px;
+    }
+    .map_container {
+        position: relative;
+        width: 772px;
+        height: 515px;
+    }
+    .map {
+        position: absolute;
+        left: 0;
+        top: 0;
+        /*border: 3px solid green;*/
+        padding: 0px, 0px, 0px, 0px;
+    }
+    .overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        /*border: 2px solid red;*/
+        padding: 0px, 0px, 0px, 0px;
+    }
+    
+    .tooltip {
+        position: fixed;
+        top: 50px;
+        left: 50px;
+        /*height: 20px;*/
+        /*width: 240px;*/
+        background-color: #000000;
+        color: #ff0000;
+        font-family: monospace;
+        font-size: 12px;
+    }
+    .tutorial {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 70%;
+    }
+    .btn_right_align {
+        float: right;
+    }
+    .hide {
+        display: none;
+    }
+    #file_browser {
+        display: none;
+    }
+   select {
+        margin-top: 2px;
+        padding: 3px;
+        border: 0; 
+        letter-spacing: .1em;
+        border-radius: 0;
+        &:focus, &:active {
+            outline: 0;
+            border-bottom-color: red;
+        }
+    }
+    .marker_list {
+        position: absolute;
+        left: 772px;
+        width: 200px;
+        height: 515px;
+    }
+    .marker_msg_ta {
+        margin-top: 5px;
+        resize: none;
+        /*width: 100%;*/
+        width: 768px;
+        height: 60px;
+    }
+    .overlay_container {
+        display: none;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: auto;
+        margin-bottom: auto;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        position: absolute;
+        width: 80%;
+        height: 50%;
+        border: dotted red 4px;
+        background-color: grey;
+    }
+    /*
+    .center {
+        display: block;
+        margin: auto;
+    }
+    */
+    #overlay_title {
+        text-align: center;
+    }
+    table {
+        table-layout: fixed;
+    }
+    
+</style>
+
+</head>
+
+
+
+<body id="body">
+<div id="master_container" class="master_container">
+<div class="map_container">
+<canvas class="map" id="map_canvas" width="772px" height="515px">
+</canvas>
+<canvas class="overlay" id="map_overlay" width="772px" height="515px">
+</canvas>
+<select id="marker_list" class="marker_list hide" size="2"></select>
+<div id="overlay_container" class="overlay_container center">
+    <table style="width:100%">
+        <tr>
+            <td id="overlay_title" colspan="3" style="height: 2em;">Placeholder for the title</td>
+        </tr>
+        <tr>
+            <td>
+                <table class="center">
+                    <tr>
+                        <td><input type="text" id="overlay_x" style="width: 98%;"></input></td>
+                        <td><input type="text" id="overlay_y" style="width: 98%;"></input></td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+            </td>
+            <td>
+                <select id="color_select_overlay" style="width: 100%;">
+                    <option value="#ff0000"></option>
+                    <option value="#00ff00"></option>
+                    <option value="#0000ff"></option>
+                    <option value="#ff00ff"></option>
+                    <option value="#00ffff"></option>
+                    <option value="#ffff00"></option>
+                    <option value="#000000"></option>
+                    <option value="#ffffff"></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"><textarea id="overlay_msg" style="height: 100px; resize: none; width: 99%" class="center"></textarea></td>
+        </tr>
+        <tr>
+            <td> <button id="overlay_delete" style="width: 90%;" class="center button small">delete</button> </td>
+            <td> <button id="overlay_cancel" style="width: 90%;" class="center button small">cancel</button> </td>
+            <td> <button id="overlay_save" style="width: 90%;" class="center button small">save</button> </td>
+        </tr>
+    </table> 
+</div>
+</div>
+
+<input type="text" id="ta"></input>
+
+<select id="color_select">
+    <option value="#ff0000"></option>
+    <option value="#00ff00"></option>
+    <option value="#0000ff"></option>
+    <option value="#ff00ff"></option>
+    <option value="#00ffff"></option>
+    <option value="#ffff00"></option>
+    <option value="#000000"></option>
+    <option value="#ffffff"></option>
+</select>
+
+<select id="map_select">
+    <option value="alterac_valley">Alterac Valley</option>
+    <option value="arathi_basin">Arathi Basin</option>
+    <option value="arathi_highlands">Arathi Highlands</option>
+    <option value="ashenvale">Ashenvale</option>
+    <option value="azeroth" selected="selected">Azeroth</option>
+    <option value="azshara">Azshara</option>
+    <option value="badlands">Badlands</option>
+    <option value="blasted_lands">Blasted Lands</option>
+    <option value="burning_steppes">Burning Steppes</option>
+    <option value="darkshore">Darkshore</option>
+    <option value="darnassus">Darnassus</option>
+    <option value="deadwind_pass">Deadwind Pass</option>
+    <option value="desolace">Desolace</option>
+    <option value="dun_morogh">Dun Morogh</option>
+    <option value="durotar">Durotar</option>
+    <option value="duskwood">Duskwood</option>
+    <option value="dustwallow_marsh">Dustwallow Marsh</option>
+    <option value="eastern_kingdoms">Eastern Kingdoms</option>
+    <option value="eastern_plaguelands">Eastern Plaguelands</option>
+    <option value="elwynn_forest">Elwynn Forest</option>
+    <option value="felwood">Felwood</option>
+    <option value="feralas">Feralas</option>
+    <option value="hillsbrad_foothills">Hillsbrad Foothills</option>
+    <option value="ironforge">Ironforge</option>
+    <option value="kalimdor">Kalimdor</option>
+    <option value="loch_modan">Loch Modan</option>
+    <option value="moonglade">Moonglade</option>
+    <option value="mulgore">Mulgore</option>
+    <option value="orgrimmar">Orgrimmar</option>
+    <option value="redridge_mountains">Redridge Mountains</option>
+    <option value="searing_gorge">Searing Gorge</option>
+    <option value="silithus">Silithus</option>
+    <option value="silverpine_forest">Silverpine Forest</option>
+    <option value="stonetalon_mountains">Stonetalon Mountains</option>
+    <option value="stormwind">Stormwind</option>
+    <option value="stranglethorn_vale">Stranglethorn Vale</option>
+    <option value="swamp_of_sorrows">Swamp of Sorrows</option>
+    <option value="tanaris">Tanaris</option>
+    <option value="teldrassil">Teldrassil</option>
+    <option value="the_barrens">The Barrens</option>
+    <option value="the_hinterlands">The Hinterlands</option>
+    <option value="thousand_needles">Thousand Needles</option>
+    <option value="thunder_bluff">Thunder Bluff</option>
+    <option value="tirisfal_glades">Tirisfal Glades</option>
+    <option value="undercity">Undercity</option>
+    <option value="ungoro_crater">Ungoro Crater</option>
+    <option value="warsong_gulch">Warsong Gulch</option>
+    <option value="western_plaguelands">Western Plaguelands</option>
+    <option value="westfall">Westfall</option>
+    <option value="wetlands">Wetlands</option>
+    <option value="winterspring">Winterspring</option>
+</select>
+
+<button id="list_button" class="button small btn_right_align">list</button>
+<button id="save_button" class="button small green btn_right_align">save</button>
+<button id="import_button" class="button small blue btn_right_align">import</button>
+<button id="load_button" class="button small blue btn_right_align">load</button>
+<button id="clear_page_button" class="button small red btn_right_align">clear</button>
+<input type="file" id="file_browser"></input>
+
+<textarea id="marker_msg_ta" class="marker_msg_ta"></textarea>
+
+<p class="tutorial">Click to set or delete a marker.</p>
+<p class="tutorial">Ctrl+Click to set a marker with text or edit an existing markers text</p>
+<p class="tutorial">Rightclick to navigate</p>
+<p class="tutorial">Ctrl-Rightclick to zoom out one level</p>
+
+
+</div>
+<div id="tooltip" class="tooltip hide">I am a tooltip!</div>
+
+<img  id="img_container" src="" style="display: none;"></img>
+
+<script src="nav.js" type="text/javascript"></script>
+
+<!--dev-tool to set up navigation coords-->
+<!--<textarea id="temp"></textarea>-->
+
+<script src="main.js" type="text/javascript"></script>
+
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
