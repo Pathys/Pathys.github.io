@@ -6,111 +6,7 @@
 	<title>map-view</title>
 	<meta name="description" content="Kurzbeschreibung" />
 
-<link rel="stylesheet" href="plastic_buttons.css">
-
-<style>
-    .master_container {
-        width: 772px;
-    }
-    .map_container {
-        position: relative;
-        width: 772px;
-        height: 515px;
-    }
-    .map {
-        position: absolute;
-        left: 0;
-        top: 0;
-        /*border: 3px solid green;*/
-        padding: 0px, 0px, 0px, 0px;
-    }
-    .overlay {
-        position: absolute;
-        left: 0;
-        top: 0;
-        /*border: 2px solid red;*/
-        padding: 0px, 0px, 0px, 0px;
-    }
-    
-    .tooltip {
-        position: fixed;
-        top: 50px;
-        left: 50px;
-        /*height: 20px;*/
-        /*width: 240px;*/
-        background-color: #000000;
-        color: #ff0000;
-        font-family: monospace;
-        font-size: 12px;
-    }
-    .tutorial {
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        line-height: 70%;
-    }
-    .btn_right_align {
-        float: right;
-    }
-    .hide {
-        display: none;
-    }
-    #file_browser {
-        display: none;
-    }
-   select {
-        margin-top: 2px;
-        padding: 3px;
-        border: 0; 
-        letter-spacing: .1em;
-        border-radius: 0;
-        &:focus, &:active {
-            outline: 0;
-            border-bottom-color: red;
-        }
-    }
-    .marker_list {
-        position: absolute;
-        left: 772px;
-        width: 200px;
-        height: 515px;
-    }
-    .marker_msg_ta {
-        margin-top: 5px;
-        resize: none;
-        /*width: 100%;*/
-        width: 768px;
-        height: 60px;
-    }
-    .overlay_container {
-        display: none;
-        margin-left: auto;
-        margin-right: auto;
-        margin-top: auto;
-        margin-bottom: auto;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        position: absolute;
-        width: 80%;
-        height: 50%;
-        border: dotted red 4px;
-        background-color: grey;
-    }
-    /*
-    .center {
-        display: block;
-        margin: auto;
-    }
-    */
-    #overlay_title {
-        text-align: center;
-    }
-    table {
-        table-layout: fixed;
-    }
-    
-</style>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
@@ -237,14 +133,12 @@
 <button id="import_button" class="button small blue btn_right_align">import</button>
 <button id="load_button" class="button small blue btn_right_align">load</button>
 <button id="clear_page_button" class="button small red btn_right_align">clear</button>
-<input type="file" id="file_browser"></input>
+<input type="file" id="file_browser" accept=".json"></input>
 
 <textarea id="marker_msg_ta" class="marker_msg_ta"></textarea>
 
-<p class="tutorial">Click to set or delete a marker.</p>
-<p class="tutorial">Ctrl+Click to set a marker with text or edit an existing markers text</p>
-<p class="tutorial">Rightclick to navigate</p>
-<p class="tutorial">Ctrl-Rightclick to zoom out one level</p>
+<a href="help.html">help</a>
+
 
 
 </div>

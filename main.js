@@ -1,4 +1,6 @@
-
+available_maps = {
+    alterac_valley : "Alterac Valley", arathi_basin : "Arathi Basin", arathi_highlands : "Arathi Highlands", ashenvale : "Ashenvale", azeroth : "Azeroth", azshara : "Azshara", badlands : "Badlands", blasted_lands : "Blasted Lands", burning_steppes : "Burning Steppes", darkshore : "Darkshore", darnassus : "Darnassus", deadwind_pass : "Deadwind Pass", desolace : "Desolace", dun_morogh : "Dun Morogh", durotar : "Durotar", duskwood : "Duskwood", dustwallow_marsh : "Dustwallow Marsh", eastern_kingdoms : "Eastern Kingdoms", eastern_plaguelands : "Eastern Plaguelands", elwynn_forest : "Elwynn Forest", felwood : "Felwood", feralas : "Feralas", hillsbrad_foothills : "Hillsbrad Foothills", ironforge : "Ironforge", kalimdor : "Kalimdor", loch_modan : "Loch Modan", moonglade : "Moonglade", mulgore : "Mulgore", orgrimmar : "Orgrimmar", redridge_mountains : "Redridge Mountains", searing_gorge : "Searing Gorge", silithus : "Silithus", silverpine_forest : "Silverpine Forest", stonetalon_mountains : "Stonetalon Mountains", stormwind : "Stormwind", stranglethorn_vale : "Stranglethorn Vale", swamp_of_sorrows : "Swamp Of Sorrows", tanaris : "Tanaris", teldrassil : "Teldrassil", the_barrens : "The_Barrens", the_hinterlands : "The Hinterlands", thousand_needles : "Thousand Needles", thunder_bluff : "Thunder Bluff", tirisfal_glades : "Tirisfal Glades", undercity : "Undercity", ungoro_crater : "Ungoro Crater", warsong_gulch : "Warsong Gulch", western_plaguelands : "Western Plaguelands", westfall : "Westfall", wetlands : "Wetlands", winterspring : "Winterspring"
+}
 markers = {}
 map_w = 772
 map_h = 515
@@ -74,6 +76,8 @@ function overlay_save () {
     canv_y = canv_pos[1]
     msg = document.getElementById("overlay_msg").value
     color = document.getElementById("color_select_overlay").value
+    nav = msg.substr(msg.search("#")+1)
+    if (!(nav in available_maps)) nav = null;
     sel_marker = markers[map][selected_marker]
     sel_marker[0] = canv_x
     sel_marker[1] = canv_y
@@ -81,6 +85,7 @@ function overlay_save () {
     sel_marker[4] = x
     sel_marker[5] = y
     sel_marker[6] = msg
+    sel_marker[7] = nav
     selected_marker = null
     drawBoxes()
     document.getElementById("overlay_container").style.display = "none";
@@ -101,7 +106,6 @@ function show_edit_overlay () {
 
 // handles keyboard-key prasses caught by body element
 function handleKeyboard (ev) {
-    //console.log(ev.keyCode)
     // (DEL) remove selected marker
     if (ev.keyCode == 46) {
         if (selected_marker != null) {
@@ -110,6 +114,28 @@ function handleKeyboard (ev) {
         }
         drawBoxes()
         updateMarkerList()
+    }
+    // num - key == up
+    else if (ev.keyCode == 109) {
+        if (selected_marker != null && selected_marker != 0) {
+            let tmp = markers[map][selected_marker-1]
+            markers[map][selected_marker-1] = markers[map][selected_marker]
+            markers[map][selected_marker] = tmp
+            updateMarkerList()
+            --selected_marker
+            document.getElementById("marker_list").selectedIndex = selected_marker
+        }
+    }
+    // num + key == down
+    else if (ev.keyCode == 107) {
+        if (selected_marker != null && selected_marker != markers[map].length - 1) {
+            let tmp = markers[map][parseInt(selected_marker)+1] // selected marker may be a string here...and + is stupid
+            markers[map][parseInt(selected_marker)+1] = markers[map][selected_marker]
+            markers[map][selected_marker] = tmp
+            updateMarkerList()
+            ++selected_marker
+            document.getElementById("marker_list").selectedIndex = selected_marker
+        }
     }
 }
 
@@ -151,6 +177,7 @@ function clear () {
     updateMarkerList()
 }
 
+
 function color_select_paint_background() {
     cs = document.getElementById("color_select")
     overlay_cs = document.getElementById("color_select_overlay")
@@ -170,6 +197,7 @@ function color_select_paint_options_background() {
         overlay_option.style.backgroundColor = option.value
     }
 }
+
 
 // convert markers to blob and offer for "download"
 function save() {
@@ -226,6 +254,7 @@ function load () {
 
 // change map
 function loadMap() {
+    console.log("loading map: ",document.getElementById("map_select").value)
     map = document.getElementById("map_select").value
     img = document.getElementById("img_container")
     img.src = "maps/" + map + ".jpg"
@@ -277,12 +306,21 @@ function handleMouseover(ev) {
 }
 
 
-// 
+// buuild the text for the tooltip
 function make_tooltip_text(i) {
     text = '<span style="color: #ffff00">' + markers[map][i][4] + " / " + markers[map][i][5] + '</span>'
-    text += '<br/><span style="color: #ff0000">' + markers[map][i][6] + '</span>'
+    let marker_text = markers[map][i][6]
+    if (marker_text.length > 23) marker_text = marker_text.substr(0,23) + "...";
+    text += '<br/><span style="color: #ff0000">' + marker_text + '</span>'
     return text
 }
+
+function make_list_text (i) {
+    let marker_text = markers[map][i][6]
+    if (marker_text.length > 23) marker_text = marker_text.substr(0,23) + "...";
+    return marker_text
+}
+
 
 // turn canvas coordinates into wow map coordinates
 function convertPosToCoords(x,y) {
@@ -294,13 +332,10 @@ function convertPosToCoords(x,y) {
 }
 // does the opposite
 function convertCoordsToPos (x,y) {
-console.log(x," - ",y)
   x /= 100
   y /= 100
-console.log(x," - ",y)
   x = Math.floor(x * map_w)
   y = Math.floor(y * map_h)
-console.log(x," - ",y)
   return [x,y]
 }
 
@@ -337,17 +372,31 @@ function map_overlayClickHandler(ev) {
             }
             return
         }
-        // navigate around on normal (no ctrl/alt) right click
-        coords = convertPosToCoords()
-        for (i=0;i<navigation[map].nav.length;++i) {
-            x1 = navigation[map].nav[i][0][0]
-            y1 = navigation[map].nav[i][0][1]
-            x2 = navigation[map].nav[i][1][0]
-            y2 = navigation[map].nav[i][1][1]
-            if (navX >= x1 && navX <= x2 && navY >= y1 && navY <= y2) {
-                document.getElementById("map_select").value = navigation[map].nav[i][2]
-                loadMap()
-                return
+        else {
+            // if marker under mouse, check if it can navigate
+            let index = getBox(x,y)
+            if (index != null) {
+                if (markers[map][index][7] != null) {
+                    console.log("navinfo found in marker:", markers[map][index][7])
+                    document.getElementById("map_select").value = markers[map][index][7]
+                    selected_marker = null
+                    loadMap()
+                    return
+                }
+                else return;
+            }
+            // else, navigate around based on clickzones
+            coords = convertPosToCoords()
+            for (i=0;i<navigation[map].nav.length;++i) {
+                x1 = navigation[map].nav[i][0][0]
+                y1 = navigation[map].nav[i][0][1]
+                x2 = navigation[map].nav[i][1][0]
+                y2 = navigation[map].nav[i][1][1]
+                if (navX >= x1 && navX <= x2 && navY >= y1 && navY <= y2) {
+                    document.getElementById("map_select").value = navigation[map].nav[i][2]
+                    loadMap()
+                    return
+                }
             }
         }
         return
@@ -384,14 +433,22 @@ function map_overlayClickHandler(ev) {
         return
     }
     else {
-        // if there is no marker, add one...
+        // if there is no marker, deselect (alt)
+        if (alt) {
+            selected_marker = null
+            updateMarkerList()
+            drawBoxes()
+            return
+        }
+        
+        // ... add one (no modifier)
         c = document.getElementById("color_select").value
         mapcoords = convertPosToCoords(x,y)
         mapX = mapcoords[0]
         mapY = mapcoords[1]
         text = ""
-        // marker element: [x, y, color, selected, mapX, mapY, text]
-        markers[map].push([x,y,c,false,mapX,mapY,text])
+        // marker element: [x, y, color, selected, mapX, mapY, text, nav]
+        markers[map].push([x,y,c,false,mapX,mapY,text,null])
         drawBoxes()
         updateMarkerList()
         // ...and if ctrl is pressed, edit it immediately
@@ -421,7 +478,7 @@ function updateMarkerList () {
             new_entry.innerHTML = markers[map][i][4] + "/" + markers[map][i][5]
         }
         else {
-            new_entry.innerHTML = markers[map][i][6]
+            new_entry.innerHTML = make_list_text(i)//markers[map][i][6]
         }
         marker_list.appendChild(new_entry)
     }
