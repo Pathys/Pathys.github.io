@@ -1,6 +1,18 @@
 available_maps = {
     alterac_valley : "Alterac Valley", arathi_basin : "Arathi Basin", arathi_highlands : "Arathi Highlands", ashenvale : "Ashenvale", azeroth : "Azeroth", azshara : "Azshara", badlands : "Badlands", blasted_lands : "Blasted Lands", burning_steppes : "Burning Steppes", darkshore : "Darkshore", darnassus : "Darnassus", deadwind_pass : "Deadwind Pass", desolace : "Desolace", dun_morogh : "Dun Morogh", durotar : "Durotar", duskwood : "Duskwood", dustwallow_marsh : "Dustwallow Marsh", eastern_kingdoms : "Eastern Kingdoms", eastern_plaguelands : "Eastern Plaguelands", elwynn_forest : "Elwynn Forest", felwood : "Felwood", feralas : "Feralas", hillsbrad_foothills : "Hillsbrad Foothills", ironforge : "Ironforge", kalimdor : "Kalimdor", loch_modan : "Loch Modan", moonglade : "Moonglade", mulgore : "Mulgore", orgrimmar : "Orgrimmar", redridge_mountains : "Redridge Mountains", searing_gorge : "Searing Gorge", silithus : "Silithus", silverpine_forest : "Silverpine Forest", stonetalon_mountains : "Stonetalon Mountains", stormwind : "Stormwind", stranglethorn_vale : "Stranglethorn Vale", swamp_of_sorrows : "Swamp Of Sorrows", tanaris : "Tanaris", teldrassil : "Teldrassil", the_barrens : "The_Barrens", the_hinterlands : "The Hinterlands", thousand_needles : "Thousand Needles", thunder_bluff : "Thunder Bluff", tirisfal_glades : "Tirisfal Glades", undercity : "Undercity", ungoro_crater : "Ungoro Crater", warsong_gulch : "Warsong Gulch", western_plaguelands : "Western Plaguelands", westfall : "Westfall", wetlands : "Wetlands", winterspring : "Winterspring"
 }
+
+available_pins = {
+    pin_red : {file: "assets/pin_red.png", value: "pin_red", color: "#ff0000", text:"pin"},
+    pin_green : {file: "assets/pin_green.png", value: "pin_green", color: "#00ff00", text:"pin"},
+    pin_blue : {file: "assets/pin_blue.png", value: "pin_blue", color: "#0000ff", text:"pin"},
+    pin_purple : {file: "assets/pin_purple.png", value: "pin_purple", color: "#ff00ff", text:"pin"},
+    pin_yellow : {file: "assets/pin_yellow.png", value: "pin_yellow", color: "#ffff00", text:"pin"},
+    qmark : {file: "assets/qmark.png", value: "qmark", color: "#ffff00", text:"quest"},
+    hearth : {file: "assets/hearthstone.png", value: "qmark", color: "#ffffff", text:"hearth"}
+}
+
+// globs
 markers = {}
 map_w = 772
 map_h = 515
@@ -17,12 +29,12 @@ clickCount = 0
 clickText = "["
 
 
+
 cv = document.getElementById("map_overlay")
 cv.addEventListener("mousedown", map_overlayClickHandler)
 cv.addEventListener("mousemove", handleMouseover)
 // silence the right-click default reaction for the overlay
 cv.addEventListener("contextmenu", function(e) { e.preventDefault(); }, false)
-
 // keyboard handler
 document.getElementById("body").addEventListener("keyup", handleKeyboard)
 // draw map everytime img changes
@@ -35,6 +47,7 @@ document.getElementById("clear_page_button").addEventListener("click", clear)
 document.getElementById("import_button").addEventListener("click", chooseFileImport)
 document.getElementById("load_button").addEventListener("click", chooseFileLoad)
 document.getElementById("save_button").addEventListener("click", save)
+document.getElementById("print_button").addEventListener("click", save_image)
 document.getElementById("list_button").addEventListener("click", list_toggle)
 document.getElementById("file_browser").addEventListener("change", load)
 document.getElementById("color_select").addEventListener("change", color_select_paint_background)
@@ -75,13 +88,13 @@ function overlay_save () {
     canv_x = canv_pos[0]
     canv_y = canv_pos[1]
     msg = document.getElementById("overlay_msg").value
-    color = document.getElementById("color_select_overlay").value
+    pin = document.getElementById("color_select_overlay").selectedIndex
     nav = msg.substr(msg.search("#")+1)
     if (!(nav in available_maps)) nav = null;
-    sel_marker = markers[map][selected_marker]
+    let sel_marker = markers[map][selected_marker]
     sel_marker[0] = canv_x
     sel_marker[1] = canv_y
-    sel_marker[2] = color
+    sel_marker[2] = pin
     sel_marker[4] = x
     sel_marker[5] = y
     sel_marker[6] = msg
@@ -101,13 +114,40 @@ function show_edit_overlay () {
     document.getElementById("overlay_y").value = markers[map][selected_marker][5]
     document.getElementById("overlay_msg").value = markers[map][selected_marker][6]
     document.getElementById("overlay_container").style.display = "block";
+    document.getElementById("color_select_overlay").selectedIndex = markers[map][selected_marker][2]
+    color_select_paint_background()
 }
 
 
 // handles keyboard-key prasses caught by body element
 function handleKeyboard (ev) {
+    
+    //console.log(ev.keyCode)
+    let key = ev.keyCode
+    
+    
+    // 39 right 37 left 38 up 40 down
+    if (key == 39 || key == 37) {
+        //check if sidelist has focus
+        if (document.activeElement == document.getElementById("marker_list")) {
+            return
+        }
+        let mlen = markers[map].length
+        if (selected_marker == null) {
+            if (mlen != 0) selected_marker = (key == 39)?0:(mlen-1);
+            else return;
+        }
+        else {
+            selected_marker += (key == 39)?1:-1
+            if (selected_marker >= mlen) selected_marker = mlen - 1;
+            if (selected_marker < 0) selected_marker = 0;
+        }
+        drawBoxes()
+        document.getElementById("marker_list").selectedIndex = selected_marker
+    }
+    
     // (DEL) remove selected marker
-    if (ev.keyCode == 46) {
+    else if (ev.keyCode == 46) {
         if (selected_marker != null) {
             markers[map].splice(selected_marker,1)
             selected_marker = null
@@ -166,7 +206,6 @@ function list_toggle() {
         mlist.classList.add("hide")
         mc.style.width = mc.style.width - 200
     }
-    
 }
 
 
@@ -178,24 +217,48 @@ function clear () {
 }
 
 
+
+// paint the color SELECT after a new option has been chosen
 function color_select_paint_background() {
-    cs = document.getElementById("color_select")
-    overlay_cs = document.getElementById("color_select_overlay")
-    cs.style.backgroundColor = cs.value
-    overlay_cs.style.backgroundColor = overlay_cs.value
+    let cs = document.getElementById("color_select")
+    let ov_cs = document.getElementById("color_select_overlay")
+    cs.style.backgroundColor = available_pins[cs.value].color
+    ov_cs.style.backgroundColor = available_pins[ov_cs.value].color
 }
 
 
-//paint the color options
+// Build the 2 select-menus (normal and overlay)
+// Also pre-loads the images as hidden elements into a buffer to facilitate
+// fast draw options later
+// TODO: rename function
 function color_select_paint_options_background() {
-    options = document.getElementById("color_select").children
-    overlay_options = document.getElementById("color_select_overlay").children
-    for (i=0;i<options.length;++i) {
-        option = options[i]
-        overlay_option = overlay_options[i]
-        option.style.backgroundColor = option.value
-        overlay_option.style.backgroundColor = option.value
+    let cs = document.getElementById("color_select")
+    let ov_cs = document.getElementById("color_select_overlay")
+    let buffer = document.getElementById("drawbuffer")
+    let p = null
+    for (p in available_pins) {
+        let color = available_pins[p].color
+        let value = available_pins[p].value
+        let file = available_pins[p].file
+        let text = available_pins[p].text
+        let n = document.createElement("Option")
+        let no = document.createElement("Option")
+        // we pre-load all available img data for later drawing
+        let img = document.createElement("img")
+        img.src = file
+        n.style.backgroundColor = color
+        no.style.backgroundColor = color
+        n.value = value
+        no.value = value
+        n.innerHTML = text
+        no.innerHTML = text
+        cs.appendChild(n)
+        ov_cs.appendChild(no)
+        buffer.appendChild(img)
     }
+    // select the first option of each to trigger color_select_paint_background
+    cs.selectedIndex = 0;
+    ov_cs.selectedIndex = 0;
 }
 
 
@@ -208,6 +271,27 @@ function save() {
     url = window.URL.createObjectURL(blob)
     virtual_link.href = url
     virtual_link.download = "myMaps.json"
+    virtual_link.click()
+    window.URL.revokeObjectURL(url)
+}
+
+
+function save_image() {
+    // draw map and markers onto same canvas (overlay)
+    let cv = document.getElementById("map_overlay")
+    drawBoxes(true)
+    // let the HTML canvas write to blob and specify callback
+    cv.toBlob(save_image_callback)
+    
+}
+// convert image and offers it for download
+function save_image_callback(blob) {
+    virtual_link = document.createElement("a")
+    document.body.appendChild(virtual_link)
+    virtual_link.style = "display: none"
+    url = window.URL.createObjectURL(blob)
+    virtual_link.href = url
+    virtual_link.download = "myMap.png"
     virtual_link.click()
     window.URL.revokeObjectURL(url)
 }
@@ -441,8 +525,8 @@ function map_overlayClickHandler(ev) {
             return
         }
         
-        // ... add one (no modifier)
-        c = document.getElementById("color_select").value
+        // ... or add one (no modifier)
+        c = document.getElementById("color_select").selectedIndex
         mapcoords = convertPosToCoords(x,y)
         mapX = mapcoords[0]
         mapY = mapcoords[1]
@@ -486,23 +570,30 @@ function updateMarkerList () {
 
 
 // draw the current collection of marker-boxes onto the map overlay
-function drawBoxes() {
-    cv = document.getElementById("map_overlay")
-    cx = cv.getContext("2d")
+function drawBoxes(wipe_with_map=false) {
+    let cv = document.getElementById("map_overlay")
+    let cx = cv.getContext("2d")
     
-    cx.clearRect(0,0,cv.width,cv.height)
+    if (wipe_with_map) {
+        cx.drawImage(document.getElementById("img_container"),0,0)
+    }
+    else {
+        cx.clearRect(0,0,cv.width,cv.height);
+    }
     
-    for (i=0;i<markers[map].length;++i) {
-        x = markers[map][i][0]
-        y = markers[map][i][1]
-        cx.fillStyle = markers[map][i][2]
-        cx.fillRect(x-3,y-3,6,6)
-        
+    let buffer = document.getElementById("drawbuffer")
+    for (let i=0;i<markers[map].length;++i) {
+        let x = markers[map][i][0] - 5
+        let y = markers[map][i][1] - 5
+        let img = buffer.children[markers[map][i][2]]
+        //cx.fillStyle = markers[map][i][2]
+        //cx.fillRect(x-3,y-3,6,6)
+        cx.drawImage(img, x, y)
         // special draw for the selected marker
         if (selected_marker != null && i == selected_marker) {
             cx.fillStyle = "#ffffff"
-            cx.fillRect(x-1,y-5,2,10)
-            cx.fillRect(x-5,y-1,10,2)
+            cx.fillRect(x+5,y,1,11)
+            cx.fillRect(x,y+5,11,1)
         }
     }
 }

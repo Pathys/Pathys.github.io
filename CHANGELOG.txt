@@ -1,0 +1,35 @@
+2019-08-17
+ *  First work, basic concept
+
+2019-08-18
+ *  First Version, all basic functions
+ *  Navigation
+
+2019-08-19
+ *  Added Import Options
+ 
+2019-08-20
+ *  List of current markers
+ *  Edit overlay
+
+ 2019-08-21
+ *  Edit Overlay with new markers on Ctrl+Left-click
+ *  tooltip and marker-list now truncate long messages
+ *  Usability improvements
+     *  Editing an existing marker now updates the marker-list
+ *  Order of markers in list can be changed
+ *  Markers can link to zones (right click)
+    marker text has to end on "#zone_name"
+ .  Optical Improvements
+     *  draw markers from png
+ 
+ 
+ Planned
+     .  buttons in WoW style
+     .  tooltip
+     .  borders
+ .  Usability improvements
+     .  Marker list items have the color of their marker
+  
+ .  Tech debt
+    Make sure 'selected_marker' is a NUMBER whenever its updated (parseInt)
