@@ -65,6 +65,48 @@ document.getElementById("map_select").value = "azeroth"
 loadMap()
 
 
+// not accessible without console
+function importMarkersFromText() {
+    let t = document.getElementById("marker_msg_ta").value
+    let map_str = document.getElementById("map_select").value
+    let pinType = document.getElementById("color_select").selectedIndex
+    let lnRegEx = /(.*)\n/g
+    let coordRegEx = /\(([\d\.]+), ?([\d\.]+)\)/g;
+    /*
+    JS regex system is idiotic.
+    A regex object stores the index of the last match in its .lastIndex property
+    You have to call exec multiple times, every time it gives you the next match
+    IF the g flag is set. Don't loop over a regex without g, you get an infinite
+    loop. Also, the regex obj STORES the .lastIndex, so if you use the same one
+    multiple times in the same block, you have to manually reset .lastIndex
+    Also, never use an inline regex, aka. one that is not a variable. The inline
+    will generate a NEW regex obj every iteration, which starts at .lastIndex 0
+    again and again.
+    */
+    
+    // get lines and number them
+    let lines = []
+    let linenr = 1
+    let mo = null
+    while (mo = lnRegEx.exec(t)) {
+        lines.push(linenr.toString() + ") " + mo[1])
+        ++linenr
+    }
+    
+    // make a marker for each set of coordinates in each line, with the line
+    // it occurred in as text
+    for (let i = 0; i<lines.length;++i) {
+        coordRegEx.lastIndex = 0;
+        let coordFound = false
+        while (mo = coordRegEx.exec(lines[i])) {
+            coordFound = true
+            placeNewMarker(mo[1],mo[2],null,null,text=lines[i])
+        }
+        // place "story-markers", aka. lines without coords
+        if (!coordFound) placeNewMarker(99,99,null,null,text=lines[i])
+    }
+}
+
 // overlay - buttons
 function overlay_cancel () {
     document.getElementById("overlay_container").style.display = "none";
@@ -183,6 +225,7 @@ function handleKeyboard (ev) {
         drawBoxes()
         document.getElementById("marker_list").selectedIndex = selected_marker
         document.getElementById("marker_msg_ta").value = markers[map][selected_marker][6]
+        document.getElementById("ta").value = markers[map][selected_marker][4] + " - " + markers[map][selected_marker][5]
     }
     
     // (DEL) remove selected marker
@@ -630,6 +673,7 @@ function updateMarkerList () {
 function drawBoxes(wipe_with_map=false) {
     let cv = document.getElementById("map_overlay")
     let cx = cv.getContext("2d")
+    let selX = null, selY = null;
     
     if (wipe_with_map) {
         cx.drawImage(document.getElementById("img_container"),0,0)
@@ -646,11 +690,55 @@ function drawBoxes(wipe_with_map=false) {
         //cx.fillStyle = markers[map][i][2]
         //cx.fillRect(x-3,y-3,6,6)
         cx.drawImage(img, x, y)
-        // special draw for the selected marker
+        // store information for target reticule position so it can be drawn last
         if (selected_marker != null && i == selected_marker) {
-            cx.fillStyle = "#ffffff"
-            cx.fillRect(x+5,y,1,11)
-            cx.fillRect(x,y+5,11,1)
+            selX = x; selY = y;
         }
     }
+    if (selX && selY) {
+        cx.fillStyle = "#ffffff"
+        cx.fillRect(selX+5,selY,1,11)
+        cx.fillRect(selX,selY+5,11,1)        
+    }
+}
+
+function placeNewMarker(x,y,map_str=null,pinIndex=null,text=null,coordsAreGame=true) {
+    //get map string if null
+    if (map_str == null) {
+        map_str = document.getElementById("map_select").value
+    }
+    if (!(map_str in available_maps)) {
+        console.error("'" + map_str + "' is not a valid map identifier.")
+    }
+    // create map array if none exists
+    if (!markers[map_str]) markers[map_str] = [];
+    
+    //get the missing set of coords (canvas or game)
+    if (coordsAreGame) {
+        gx = x; gy = y;
+        let coords = convertCoordsToPos(x, y);
+        cx = coords[0]; cy = coords[1];
+    }
+    else {
+        cx = x; cy = y;
+        let coords = convertPosToCoords(x,y);
+        gx = coords[0]; gy = coords[1];
+    }
+    
+    // get the pin index if not specified as param
+    if (pinIndex == null) {
+        pinIndex = document.getElementById("color_select").selectedIndex;
+    }
+    
+    // text fallback if not specified
+    if (text == null) text="";
+    
+    // get nav info from text
+    nav = parseNavFromText(text)
+
+    m = [cx,cy,pinIndex,false,gx,gy,text,nav]
+    
+    markers[map_str].push(m)
+    drawBoxes()
+    updateMarkerList()
 }
