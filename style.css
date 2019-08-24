@@ -100,6 +100,8 @@ table {
     table-layout: fixed;
 }
 #ta {
+    font-family: Helvetica, Arial, Sans-Serif;
+    font-size: 12px;
     width: 120px;
     background-color: #ffffff;
     text-align: center;
@@ -115,7 +117,8 @@ table {
 }
 .marker_msg_ta {
     font-family: Helvetica, Arial, Sans-Serif;
-    height: 5em;
+    font-size: 12px;
+    height: 10em;
     background: url("assets/bkgrd_hori.png") round;
     background-size: cover;
 }

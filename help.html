@@ -39,21 +39,32 @@
 <td>ALT-LEFT-CLICK</td><td align="right">Deletes a marker</td>
 </tr>
 <tr>
-<td>DELETE</td><td align="right"> Delete the selected marker</td>
-</tr>
-<tr>
 <td>RIGHT-CLICK</td><td align="right"> Navigate to area or marker</td>
 </tr>
 <tr>
 <td>CTRL-RIGHT-CLICK</td><td align="right">Zoom out one area</td>
 </tr>
+<tr>
+<td>ENTER</td><td align="right">Edit the selected marker</td>
+</tr>
+<tr>
+<td>DELETE</td><td align="right">Delete the selected marker</td>
+</tr>
+<tr>
+<td>RIGHT ARROW</td><td align="right">Goto next Marker</td>
+</tr>
+<tr>
+<td>LEFT ARROW</td><td align="right">Goto previous Marker</td>
+</tr>
 </table>
+<p class="tutorial">Right Arrow will follow marker links. This allows you to build complete quest guides that can be followed step by step.</p>
 <hr></hr>
 <p class="tutorial"><code>load</code> Replaces your current markers with new ones.</p>
 <p class="tutorial"><code>import</code> Import adds loaded markers to your current ones.</p>
 <p class="tutorial"><code>save</code> Lets you save your current markers to a file.</p>
 <hr></hr>
 <p class="tutorial">If a markers message ends with <code>#zone_name</code>, it becomes a navigation-link to that zone.</p>
+
 <p class="tutorial">The following zones names are available:</p>
 <code>
 #alterac_valley
@@ -108,6 +119,8 @@
 #wetlands
 #winterspring
 </code>
+
+<p class="tutorial">Additionally, a marker-index can be put after the zone-name, in the form of <code>#N</code> with N being the index of the marker on the target map (beginning at 0)</p>
 </body>
 
 </html>

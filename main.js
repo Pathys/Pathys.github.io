@@ -25,6 +25,7 @@ overwrite_current = true
 selected_marker = null
 color_select_paint_options_background()
 color_select_paint_background()
+
 clickCount = 0
 clickText = "["
 
@@ -60,6 +61,7 @@ document.getElementById("overlay_save").addEventListener("click", overlay_save)
 
 document.getElementById("ta").disabled = true
 
+document.getElementById("map_select").value = "azeroth"
 loadMap()
 
 
@@ -89,8 +91,7 @@ function overlay_save () {
     canv_y = canv_pos[1]
     msg = document.getElementById("overlay_msg").value
     pin = document.getElementById("color_select_overlay").selectedIndex
-    nav = msg.substr(msg.search("#")+1)
-    if (!(nav in available_maps)) nav = null;
+    nav = parseNavFromText(msg)
     let sel_marker = markers[map][selected_marker]
     sel_marker[0] = canv_x
     sel_marker[1] = canv_y
@@ -99,12 +100,29 @@ function overlay_save () {
     sel_marker[5] = y
     sel_marker[6] = msg
     sel_marker[7] = nav
-    selected_marker = null
+    //selected_marker = null
     drawBoxes()
     document.getElementById("overlay_container").style.display = "none";
     updateMarkerList()
 }
 
+// parses nav information from text, returns [navarea,navindex]
+// navarea or navindex can be null. If so, they signify no-nav
+function parseNavFromText(s) {
+    let mapNav = s.match(/#[a-z_]+/);
+    if (mapNav != null) {
+        mapNav = mapNav[0].substr(1);
+        if (!(mapNav in available_maps)) mapNav = null;
+    }
+    else return null;
+    let pinNav = s.match(/#[0-9]+/)
+    if (pinNav != null) {
+        pinNav = pinNav[0].substr(1);
+        pinNav = parseInt(pinNav)
+        if (pinNav == NaN) pinNav = null;
+    }
+    return [mapNav, pinNav];
+}
 
 // displays the editing-overlay and fills it with the selected markers data
 function show_edit_overlay () {
@@ -119,31 +137,52 @@ function show_edit_overlay () {
 }
 
 
+
 // handles keyboard-key prasses caught by body element
 function handleKeyboard (ev) {
     
     //console.log(ev.keyCode)
     let key = ev.keyCode
     
+    // all keydown functionality is disabled while edit overlay is shown
+    if (document.getElementById("overlay_container").style.display == "block") {
+        return
+    }
+    
+    
+    // ENTER : open edit overlay
+    if (key == 13) {
+        if (selected_marker != null) {
+            tooltip.classList.add("hide")
+            show_edit_overlay()
+        }
+    }
     
     // 39 right 37 left 38 up 40 down
-    if (key == 39 || key == 37) {
-        //check if sidelist has focus
+    else if (key == 39 || key == 37) {
+        //check if sidelist has focus, ignore key if so.
         if (document.activeElement == document.getElementById("marker_list")) {
             return
         }
         let mlen = markers[map].length
+        // pick the first (or last) marker if none is selected
         if (selected_marker == null) {
             if (mlen != 0) selected_marker = (key == 39)?0:(mlen-1);
             else return;
         }
+        // pick the next or prev. one if one is selected
         else {
+            // if you clicked next (39) and the currently selected marker has
+            // a nav link, follow it
+            if (key == 39 && navigateByMarker(markers[map][selected_marker])) return;
+            
             selected_marker += (key == 39)?1:-1
             if (selected_marker >= mlen) selected_marker = mlen - 1;
             if (selected_marker < 0) selected_marker = 0;
         }
         drawBoxes()
         document.getElementById("marker_list").selectedIndex = selected_marker
+        document.getElementById("marker_msg_ta").value = markers[map][selected_marker][6]
     }
     
     // (DEL) remove selected marker
@@ -183,11 +222,11 @@ function handleKeyboard (ev) {
 // selects a marker because it was chosen in the list
 function selectMarkerByList () {
     mlist = document.getElementById("marker_list")
-    selected_marker = mlist.value
+    selected_marker = mlist.selectedIndex
     drawBoxes()
-    ctext = markers[map][mlist.value][4] + " - " + markers[map][mlist.value][5]
+    ctext = markers[map][selected_marker][4] + " - " + markers[map][selected_marker][5]
     document.getElementById("ta").value = ctext
-    document.getElementById("marker_msg_ta").value = markers[map][mlist.value][6]
+    document.getElementById("marker_msg_ta").value = markers[map][selected_marker][6]
 }
 
 
@@ -436,6 +475,29 @@ function getBox (x, y) {
     return null
 }
 
+// do marker-based navigation. m == marker
+// returns true if nav, false if not
+function navigateByMarker(m) {
+    let mTextArea = document.getElementById("marker_msg_ta")
+    let nav = m[7]     
+    if (nav != null) {
+        let mapNav = nav[0]
+        let pinNav = nav[1]
+        // navigate to new map (if marker[7] != nulll it has at least mapNav)
+        document.getElementById("map_select").value = mapNav
+        selected_marker = null
+        // check if target marker and if it exists on target map
+        if (pinNav != null && (markers[mapNav].length-1 >= pinNav)) {
+            selected_marker = pinNav
+            mTextArea.value = markers[mapNav][selected_marker][6]
+        }
+        loadMap()
+        return true;
+    }
+    else false;
+}
+
+
 
 // handle all clicks into the map overlay
 function map_overlayClickHandler(ev) {
@@ -444,6 +506,7 @@ function map_overlayClickHandler(ev) {
     ctrl = ev.ctrlKey
     alt = ev.altKey
     
+    let mTextArea = document.getElementById("marker_msg_ta")
     // ------------------------------ right click -------------------------------
     // navigation
     if (ev.button == 2) {
@@ -451,23 +514,17 @@ function map_overlayClickHandler(ev) {
         // zoom out on ctrl-click
         if (ctrl) {
             if (navigation[map].out) {
+                selected_marker = null
                 document.getElementById("map_select").value = navigation[map].out
                 loadMap()
             }
             return
         }
         else {
-            // if marker under mouse, check if it can navigate
+            // if marker under mouse, attempt to navigate by marker
             let index = getBox(x,y)
             if (index != null) {
-                if (markers[map][index][7] != null) {
-                    console.log("navinfo found in marker:", markers[map][index][7])
-                    document.getElementById("map_select").value = markers[map][index][7]
-                    selected_marker = null
-                    loadMap()
-                    return
-                }
-                else return;
+                if (navigateByMarker(markers[map][index])) return;
             }
             // else, navigate around based on clickzones
             coords = convertPosToCoords()
@@ -510,7 +567,7 @@ function map_overlayClickHandler(ev) {
             document.getElementById("marker_list").selectedIndex = i
             ctext = markers[map][i][4] + " - " + markers[map][i][5]
             document.getElementById("ta").value = ctext
-            document.getElementById("marker_msg_ta").value = markers[map][i][6]
+            mTextArea.value = markers[map][i][6]
             drawBoxes()
             
         }
